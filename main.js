@@ -1,11 +1,15 @@
 var programInfo;
 var map = {65 : false, 68 : false, 32 : false};
 var keypress = false;
+
 var progress = 0;
 var camx=0.0,camz=1.0;
 var pause=false;
+
 var ground = 0;
 var gravity = -0.005;
+var state;
+
 var jake;
 var track1;
 var track2;
@@ -14,22 +18,11 @@ var wall1;
 var wall2;
 var train;
 
-var jake;
-
-function bounding_box(position,dimension){
-  this.position = position;
-  this.dimension = dimension;
-}
-
 function detect_collision(a,b){
   var colx = (Math.abs(a.position[0] - b.position[0]) *2 < a.dimension[0]+b.dimension[0]);
   var coly = (Math.abs(a.position[1] - b.position[1]) *2 < a.dimension[1]+b.dimension[1]);
   var colz = (Math.abs(a.position[2] - b.position[2]) *2 < a.dimension[2]+b.dimension[2]);
-  // console.log("HERE");
-  console.log(a.position,b.position);
-  console.log(a.dimension,b.dimension);
-  console.log(colx,coly,colz);
-  return (colx && coly && colz);
+  return [colx,coly,colz];
 }
 
 
@@ -83,12 +76,46 @@ function draw(gl, programInfo, deltaTime) {
 function tick_elements(){
   if(!pause)
   {
+    ground = 0;
+
+    //COLLISION DETECTION
+
+    //WALL
+    var collide = detect_collision(jake,wall1);
+    if(collide[0])
+      jake.slowdown();
+    collide = detect_collision(jake,wall2);
+    if(collide[0])
+      jake.slowdown();
+
+    //TRAIN
+    collide = detect_collision(jake,train);
+    if(collide[0] && collide[1] && collide[2])
+    {
+      if(state[0] && state[1])
+      {
+        //ON TOP
+        jake.speed[2]=0;
+        ground = train.position[2]+train.dimension[2]/2;
+      }
+      if(state[1] && state[2])
+      {
+        //FROM SIDE
+        jake.slowdown();
+      }
+      if(state[0] && state[2])
+      {
+        //FROM FRONT
+        jake.dead();
+      }
+    }
+    state = collide;
+
+
+    //PLAYER MOVEMENT
     jake.tick();
     progress+=jake.speed[1];
-    if(detect_collision(jake,train))
-      train.position[1]+=20;
   }
-  // console.log(detect_collision(jake,train));
 }
 
 onkeydown = onkeyup = function (event) {

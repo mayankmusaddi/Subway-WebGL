@@ -3,7 +3,7 @@ var map = {65 : false, 68 : false, 32 : false};
 var keypress = false;
 
 var progress = 0;
-var camx=0.0,camz=1.0;
+var camx=0.0,camz=1.5;
 var pause=false;
 
 var ground = 0;
@@ -16,7 +16,12 @@ var track2;
 var track3;
 var wall1;
 var wall2;
+
+var police;
+
 var train;
+var roadblock;
+var coin;
 
 function detect_collision(a,b){
   var colx = (Math.abs(a.position[0] - b.position[0]) *2 < a.dimension[0]+b.dimension[0]);
@@ -30,18 +35,23 @@ main();
 
 function initGL(gl){
   // jake = new Cube(gl, [0, 0, -0.5],[1,100,0],'cubetexture.jpg');
-  track1 = new Track(gl, 0, 0.5);
-  track2 = new Track(gl, -0.5, 0.5);
-  track3 = new Track(gl,0.5,0.5);
-  wall1 = new Wall(gl,-0.75, 1.5);
-  wall2 = new Wall(gl, 0.75, 1.5);
+  track1 = new Track(gl, 0, 1);
+  track2 = new Track(gl, -1, 1);
+  track3 = new Track(gl,1,1);
+  wall1 = new Wall(gl,-2, 4);
+  wall2 = new Wall(gl, 2, 4);
 
-  train = new Train(gl,[0,10,0.25],[0.5,5,0.7]);
-  jake = new Jake(gl,[0,0,.125],[0.15,0.1,0.25]);
+  train = new Train(gl,0,40);
+  roadblock = new RoadBlock(gl,-1,40,2);
+
+  jake = new Jake(gl,0,1);
+  police = new Police(gl,0,0);
+
+  coin = new Coin(gl,[0,3,0.25]);
 }
 // Draw the scene.
 function draw(gl, programInfo, deltaTime) {
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
+  gl.clearColor(0.72, 0.79, 0.83, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
   gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
@@ -50,12 +60,12 @@ function draw(gl, programInfo, deltaTime) {
   const fieldOfView = 45 * Math.PI / 180;   // in radians
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
-  const zFar = 100.0;
+  const zFar = 50.0;
   const projection = mat4.create();
   mat4.perspective(projection,fieldOfView,aspect,zNear,zFar);
 
   var eye = [camx,progress-3,camz];
-  var target = [camx,progress,camz];
+  var target = [camx,progress,camz-0.3];
   var up = [0, 0, 1];
   var view = mat4.create();
   mat4.lookAt(view, eye, target, up);
@@ -64,19 +74,27 @@ function draw(gl, programInfo, deltaTime) {
   mat4.multiply(VP,projection,view);
 
   //DRAW ALL ELEMENTS HERE
+  jake.draw(gl, VP, programInfo, deltaTime);
+  police.draw(gl, VP, programInfo, deltaTime);
+
   track1.draw(gl, VP, programInfo, deltaTime);
   track2.draw(gl, VP, programInfo, deltaTime);
   track3.draw(gl, VP, programInfo, deltaTime);
   wall1.draw(gl, VP, programInfo, deltaTime);
   wall2.draw(gl, VP, programInfo, deltaTime);
+
   train.draw(gl, VP, programInfo, deltaTime);
-  jake.draw(gl, VP, programInfo, deltaTime);
+  roadblock.draw(gl, VP, programInfo, deltaTime);
+  coin.draw(gl,VP, programInfo, deltaTime);
 }
 
 function tick_elements(){
   if(!pause)
   {
     ground = 0;
+
+    coin.tick();
+    train.tick();
 
     //COLLISION DETECTION
 
@@ -106,7 +124,7 @@ function tick_elements(){
       if(state[0] && state[2])
       {
         //FROM FRONT
-        jake.dead();
+        jake.hasDied();
       }
     }
     state = collide;
@@ -114,7 +132,10 @@ function tick_elements(){
 
     //PLAYER MOVEMENT
     jake.tick();
+    camx = jake.position[0]*0.6;
     progress+=jake.speed[1];
+
+    police.tick();
   }
 }
 

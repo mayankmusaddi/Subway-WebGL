@@ -3,19 +3,20 @@
 var texture;
 
 let Track = class {
-    constructor(gl, xpos,width) {
+    constructor(gl, xpos,width,len) {
         this.picture = 'track.jpg';
         this.tracks=[];
         var length = 3.5;
-        for(var i=-1;i<50;i++)
+        this.len = len;
+        for(var i=-1;i<this.len;i++)
         {
-            let t = new Cube(gl, [xpos,i*length,0],[width,3.5,0],this.picture);
+            let t = new Cube(gl, [xpos,i*length,0],[width,length,0],this.picture);
             this.tracks.push(t);
         }
     }
 
     draw(gl, projectionMatrix, programInfo, deltaTime) {
-        for(var i=0;i<50;i++){
+        for(var i=0;i<this.len;i++){
             this.tracks[i].draw(gl,projectionMatrix,programInfo,deltaTime);
         }
     }

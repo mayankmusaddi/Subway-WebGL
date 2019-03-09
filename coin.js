@@ -94,7 +94,6 @@ let Coin = class {
             vertexNormals.push(1.0);
             vertexNormals.push(0.0);
         }
-
         const normalBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals),gl.STATIC_DRAW);
@@ -166,7 +165,7 @@ let Coin = class {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer.normal);
             gl.vertexAttribPointer(programInfo.attribLocations.vertexNormal,numComponents,type,normalize,stride,offset);
             gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
-          }
+        }
         
         // Tell WebGL which indices to use to index the vertices
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffer.indices);

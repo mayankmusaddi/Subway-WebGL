@@ -4,6 +4,7 @@ var programInfoGrayscale;
 var map = {65 : false, 68 : false, 32 : false};
 var keypress = false;
 var switchShader = false;
+var len = 100;
 
 var progress = 0;
 var camx=0.0,camz=1.5;
@@ -11,6 +12,7 @@ var pause=false;
 
 var ground = 0;
 var gravity = -0.005;
+var coinsCollected = 0;
 var state;
 
 var jake;
@@ -29,34 +31,33 @@ var jumps=[];
 var magnets=[];
 var obstacles=[];
 
-function detect_collision(a,b){
-  var colx = (Math.abs(a.position[0] - b.position[0]) *2 < a.dimension[0]+b.dimension[0]);
-  var coly = (Math.abs(a.position[1] - b.position[1]) *2 < a.dimension[1]+b.dimension[1]);
-  var colz = (Math.abs(a.position[2] - b.position[2]) *2 < a.dimension[2]+b.dimension[2]);
-  return [colx,coly,colz];
-}
-
 main();
 
 function initGL(gl){
-  // jake = new Cube(gl, [0, 0, -0.5],[1,100,0],'cubetexture.jpg');
-  track1 = new Track(gl, 0, 1);
-  track2 = new Track(gl, -1, 1);
-  track3 = new Track(gl,1,1);
-  wall1 = new Wall(gl,-2, 4);
-  wall2 = new Wall(gl, 2, 4);
+  track1 = new Track(gl,0, 1,len);
+  track2 = new Track(gl,-1,1,len);
+  track3 = new Track(gl,1, 1,len);
+  wall1 = new Wall(gl,-2, 4, len);
+  wall2 = new Wall(gl, 2, 4, len);
 
-  trains.push(new Train(gl,0,40));
+  trains.push(new Train(gl,-1,40));
   roadblocks.push(new RoadBlock(gl,-1,40,2));
-  coins.push(new Coin(gl,[0,3,0.25]));
+  obstacles.push(new Obstacle(gl,1,35,2));
+
+  coins.push(new Coin(gl,[1,10,0.25]));
+  coins.push(new Coin(gl,[1,12,0.25]));
+  coins.push(new Coin(gl,[1,14,0.25]));
+  coins.push(new Coin(gl,[1,16,0.25]));
+  coins.push(new Coin(gl,[1,18,0.25]));
+
   jets.push(new Jet(gl,[1,20,0.25]));
   jumps.push(new Jump(gl,-1,20));
-  magnets.push(new Magnet(gl,0,20));
-  obstacles.push(new Obstacle(gl,1,35,2));
+  magnets.push(new Magnet(gl,0,10));
 
   jake = new Jake(gl,0,1);
   police = new Police(gl,0,0);
 }
+
 // Draw the scene.
 function draw(gl, programInfo, deltaTime) {
   gl.clearColor(0.72, 0.79, 0.83, 1.0);  // Clear to black, fully opaque
@@ -113,26 +114,88 @@ function tick_elements(){
   {
     ground = 0;
 
-    for(i=0;i<coins.length;i++)
-      coins[i].tick();
-    for(i=0;i<jets.length;i++)
-      jets[i].tick();
-    for(i=0;i<trains.length;i++)
-      trains[i].tick();
-
     //COLLISION DETECTION
-
+  
     //WALL
     var collide = detect_collision(jake,wall1);
     if(collide[0])
-      jake.slowdown();
+    jake.slowdown();
     collide = detect_collision(jake,wall2);
     if(collide[0])
-      jake.slowdown();
+    jake.slowdown();
 
+    //COINS
+    for(i=0;i<coins.length;i++)
+    {
+      coins[i].tick();
+      if(jake.magnetpo && Math.abs(coins[i].position[1]-jake.position[1]) <= 1)
+      {
+        coins[i].position[0]+= (jake.position[0]-coins[i].position[0])*0.2;
+        coins[i].position[1]+= (jake.position[1]-coins[i].position[1])*0.5;
+        coins[i].position[2]+= (jake.position[2]-coins[i].position[2])*0.2;
+      }
+      collide = detect_collision(jake,coins[i]);
+      if(collide[0] && collide[1] && collide[2])
+      {
+        coins.splice(i,1);
+        coinsCollected++;
+      }
+    }
+
+    //POWERUPS
+    for(i=0;i<jets.length;i++)
+    {
+      jets[i].tick();
+      collide = detect_collision(jake,jets[i]);
+      if(collide[0] && collide[1] && collide[2])
+      {
+        jets.splice(i,1);
+        jake.hasJet();
+      }
+    }
+    for(i=0;i<magnets.length;i++)
+    {
+      collide = detect_collision(jake,magnets[i]);
+      if(collide[0] && collide[1] && collide[2])
+      {
+        magnets.splice(i,1);
+        jake.hasMagnet();
+      }
+    }
+    for(i=0;i<jumps.length;i++)
+    {
+      collide = detect_collision(jake,jumps[i]);
+      if(collide[0] && collide[1] && collide[2])
+      {
+        jumps.splice(i,1);
+        jake.hasJump();
+      }
+    }
+
+    //ROADBLOCKS
+    for(i=0;i<roadblocks.length;i++)
+    {
+      collide = detect_collision(jake,roadblocks[i]);
+      if(collide[0] && collide[1] && collide[2])
+      {
+        jake.hasDied();
+      }
+    }
+    //OBSTACLES
+    for(i=0;i<obstacles.length;i++)
+    {
+      collide = detect_collision(jake,obstacles[i]);
+      if(collide[0] && collide[1] && collide[2])
+      {
+        obstacles.splice(i,1);
+        jake.slowdown();
+      }
+    }
+    
     //TRAIN
     for(i=0;i<trains.length;i++)
     {
+      trains[i].tick();
       collide = detect_collision(jake,trains[i]);
       if(collide[0] && collide[1] && collide[2])
       {
@@ -164,7 +227,12 @@ function tick_elements(){
     police.tick();
   }
 }
-
+function detect_collision(a,b){
+  var colx = (Math.abs(a.position[0] - b.position[0]) *2 < a.dimension[0]+b.dimension[0]);
+  var coly = (Math.abs(a.position[1] - b.position[1]) *2 < a.dimension[1]+b.dimension[1]);
+  var colz = (Math.abs(a.position[2] - b.position[2]) *2 < a.dimension[2]+b.dimension[2]);
+  return [colx,coly,colz];
+}
 onkeydown = onkeyup = function (event) {
   map[event.keyCode] = event.type == 'keydown';
   if(event.type == 'keyup')
@@ -193,15 +261,11 @@ function main() {
     alert('Unable to initialize WebGL. Your browser or machine may not support it.');
     return;
   }
-
   makeShader(gl);
-
   initGL(gl);
-
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
   //const buffers
-  
   // Draw the scene repeatedly
   var then = 0;
   function render(now) {
@@ -256,10 +320,6 @@ function makeShader(gl){
     highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
 
     gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
-    // precision highp float;
-    // vec4 color = texture2D(uSampler, vTextureCoord);
-    // float gray = dot(color.rgb,vec3(0.299,0.587,0.114));
-    // gl_FragColor = vec4(vec3(gray),1.0);
   }
   `;
   const fsSourceGrayscale = `

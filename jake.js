@@ -30,6 +30,7 @@ let Jake = class {
         this.hand2 = new Cube(gl,[this.position[0]+(2*this.dimension[0])/5,this.position[1],this.position[2]+this.dimension[2]/7],[this.dimension[0]/10,this.dimension[1]/2,3*this.dimension[2]/7],this.handpic);
         this.leg1 =  new Cube(gl,[this.position[0]-this.dimension[0]/5,this.position[1],this.position[2]-(2*this.dimension[2])/7],[this.dimension[0]/5,this.dimension[1]/2,3*this.dimension[2]/7],this.legpic);
         this.leg2 =  new Cube(gl,[this.position[0]+this.dimension[0]/5,this.position[1],this.position[2]-(2*this.dimension[2])/7],[this.dimension[0]/5,this.dimension[1]/2,3*this.dimension[2]/7],this.legpic);
+
     }
 
     draw(gl, projectionMatrix, programInfo, deltaTime) {
@@ -113,6 +114,15 @@ let Jake = class {
                 this.jumpvelocity=0.12;
             }
         }
+        //magnet effect
+        if(this.magnetpo){
+            this.distpo+=0.05;
+            if(this.distpo > 20)
+            {
+                this.distpo=0;
+                this.magnetpo=false;
+            }
+        }
 
         //gravity effect
         if(this.gstate && (this.position[2]-this.dimension[2]/2>ground))
@@ -157,6 +167,7 @@ let Jake = class {
         this.moveflag = false;
     }
     hasDied(){
+        police.chase();
         this.dead= true;
         this.speed[1]=0;
     }
@@ -167,6 +178,10 @@ let Jake = class {
     hasJet(){
         this.distpo=0;
         this.rise = true;
+    }
+    hasMagnet(){
+        this.distpo=0;
+        this.magnetpo = true;
     }
     duck(){
     }

@@ -38,9 +38,69 @@ let Jet = class {
         const textureCoordBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),gl.STATIC_DRAW);
-        
-        //INDICES
 
+        //NORMAL
+        var vertexNormals=[];
+        for(var i=0;i<this.sides;i++)
+        {
+            vertexNormals.push(0.0);
+            vertexNormals.push(-1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(-1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(-1.0);
+            vertexNormals.push(0.0);
+        }
+        for(var i=0;i<this.sides;i++)
+        {
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+        }
+        for(var i=0;i<this.sides;i++)
+        {
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+
+            vertexNormals.push(0.0);
+            vertexNormals.push(1.0);
+            vertexNormals.push(0.0);
+        }
+
+        const normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals),gl.STATIC_DRAW);
+
+        //INDICES
         var indices = [];
         for(var i=0;i<this.sides*this.v;i++)
             indices.push(i);
@@ -51,6 +111,7 @@ let Jet = class {
         this.buffer = {
             position: positionBuffer,
             indices: indexBuffer,
+            normal: normalBuffer,
             textureCoord: textureCoordBuffer,
         }
         this.texture = loadTexture(gl, this.picture);        
@@ -94,14 +155,30 @@ let Jet = class {
             gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, num, type, normalize, stride, offset);
             gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
         }
+
+        // Tell WebGL how to pull out the normals from the normal buffer into the vertexNormal attribute.
+        {
+            const numComponents = 3;
+            const type = gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer.normal);
+            gl.vertexAttribPointer(programInfo.attribLocations.vertexNormal,numComponents,type,normalize,stride,offset);
+            gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
+        }
         
         // Tell WebGL which indices to use to index the vertices
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffer.indices);
 
+        const normalMatrix = mat4.create();
+        mat4.invert(normalMatrix, modelViewMatrix);
+        mat4.transpose(normalMatrix, normalMatrix);
         // Tell WebGL to use our program when drawing
         gl.useProgram(programInfo.program);
         // Set the shader uniforms
         gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix,false,projectionMatrix);
+        gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix,false,modelViewMatrix);
         gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix,false,modelViewMatrix);
 
         // Specify the texture to map onto the faces.

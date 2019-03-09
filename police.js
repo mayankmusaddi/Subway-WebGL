@@ -4,7 +4,6 @@ var speed = 0.1;
 
 let Police = class {
     constructor(gl, lane,dist) {
-        this.picture = 'sky.jpg';
         this.dimension = [0.4,0.3,0.6];
 
         this.hitdist=0;

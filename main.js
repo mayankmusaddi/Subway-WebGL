@@ -1,6 +1,9 @@
 var programInfo;
+var programInfoNormal;
+var programInfoGrayscale;
 var map = {65 : false, 68 : false, 32 : false};
 var keypress = false;
+var switchShader = false;
 
 var progress = 0;
 var camx=0.0,camz=1.5;
@@ -11,17 +14,20 @@ var gravity = -0.005;
 var state;
 
 var jake;
+var police;
 var track1;
 var track2;
 var track3;
 var wall1;
 var wall2;
 
-var police;
-
-var train;
-var roadblock;
-var coin;
+var trains=[];
+var roadblocks=[];
+var coins=[];
+var jets=[];
+var jumps=[];
+var magnets=[];
+var obstacles=[];
 
 function detect_collision(a,b){
   var colx = (Math.abs(a.position[0] - b.position[0]) *2 < a.dimension[0]+b.dimension[0]);
@@ -29,7 +35,6 @@ function detect_collision(a,b){
   var colz = (Math.abs(a.position[2] - b.position[2]) *2 < a.dimension[2]+b.dimension[2]);
   return [colx,coly,colz];
 }
-
 
 main();
 
@@ -41,13 +46,16 @@ function initGL(gl){
   wall1 = new Wall(gl,-2, 4);
   wall2 = new Wall(gl, 2, 4);
 
-  train = new Train(gl,0,40);
-  roadblock = new RoadBlock(gl,-1,40,2);
+  trains.push(new Train(gl,0,40));
+  roadblocks.push(new RoadBlock(gl,-1,40,2));
+  coins.push(new Coin(gl,[0,3,0.25]));
+  jets.push(new Jet(gl,[1,20,0.25]));
+  jumps.push(new Jump(gl,-1,20));
+  magnets.push(new Magnet(gl,0,20));
+  obstacles.push(new Obstacle(gl,1,35,2));
 
   jake = new Jake(gl,0,1);
   police = new Police(gl,0,0);
-
-  coin = new Coin(gl,[0,3,0.25]);
 }
 // Draw the scene.
 function draw(gl, programInfo, deltaTime) {
@@ -74,18 +82,30 @@ function draw(gl, programInfo, deltaTime) {
   mat4.multiply(VP,projection,view);
 
   //DRAW ALL ELEMENTS HERE
+  for(i=0;i<coins.length;i++)
+    coins[i].draw(gl,VP, programInfo, deltaTime);
+  wall1.draw(gl, VP, programInfo, deltaTime);
+  wall2.draw(gl, VP, programInfo, deltaTime);
+  for(i=0;i<jets.length;i++)
+    jets[i].draw(gl,VP, programInfo, deltaTime);
+  
   jake.draw(gl, VP, programInfo, deltaTime);
   police.draw(gl, VP, programInfo, deltaTime);
-
+  
   track1.draw(gl, VP, programInfo, deltaTime);
   track2.draw(gl, VP, programInfo, deltaTime);
   track3.draw(gl, VP, programInfo, deltaTime);
-  wall1.draw(gl, VP, programInfo, deltaTime);
-  wall2.draw(gl, VP, programInfo, deltaTime);
-
-  train.draw(gl, VP, programInfo, deltaTime);
-  roadblock.draw(gl, VP, programInfo, deltaTime);
-  coin.draw(gl,VP, programInfo, deltaTime);
+  
+  for(i=0;i<trains.length;i++)
+    trains[i].draw(gl, VP, programInfo, deltaTime);
+  for(i=0;i<roadblocks.length;i++)
+    roadblocks[i].draw(gl, VP, programInfo, deltaTime);
+  for(i=0;i<jumps.length;i++)
+    jumps[i].draw(gl,VP, programInfo, deltaTime);
+  for(i=0;i<magnets.length;i++)
+    magnets[i].draw(gl,VP, programInfo, deltaTime);
+  for(i=0;i<obstacles.length;i++)
+    obstacles[i].draw(gl,VP, programInfo, deltaTime);
 }
 
 function tick_elements(){
@@ -93,8 +113,12 @@ function tick_elements(){
   {
     ground = 0;
 
-    coin.tick();
-    train.tick();
+    for(i=0;i<coins.length;i++)
+      coins[i].tick();
+    for(i=0;i<jets.length;i++)
+      jets[i].tick();
+    for(i=0;i<trains.length;i++)
+      trains[i].tick();
 
     //COLLISION DETECTION
 
@@ -107,31 +131,33 @@ function tick_elements(){
       jake.slowdown();
 
     //TRAIN
-    collide = detect_collision(jake,train);
-    if(collide[0] && collide[1] && collide[2])
+    for(i=0;i<trains.length;i++)
     {
-      if(state[0] && state[1])
+      collide = detect_collision(jake,trains[i]);
+      if(collide[0] && collide[1] && collide[2])
       {
-        //ON TOP
-        jake.speed[2]=0;
-        ground = train.position[2]+train.dimension[2]/2;
+        if(state[0] && state[1])
+        {
+          //ON TOP
+          jake.speed[2]=0;
+          ground = trains[i].position[2]+trains[i].dimension[2]/2;
+        }
+        if(state[1] && state[2])
+        {
+          //FROM SIDE
+          jake.slowdown();
+        }
+        if(state[0] && state[2])
+        {
+          //FROM FRONT
+          jake.hasDied();
+        }
       }
-      if(state[1] && state[2])
-      {
-        //FROM SIDE
-        jake.slowdown();
-      }
-      if(state[0] && state[2])
-      {
-        //FROM FRONT
-        jake.hasDied();
-      }
+      state = collide;
     }
-    state = collide;
-
 
     //PLAYER MOVEMENT
-    jake.tick();
+    jake.tick(); //always keep it below collision of train
     camx = jake.position[0]*0.6;
     progress+=jake.speed[1];
 
@@ -149,6 +175,8 @@ function tick_input(){
   if(map[68] && !keypress){jake.move_right();keypress=true;}
   if(map[87] && !keypress){jake.jump();keypress=true;}
   if(map[81] && !keypress){ pause = !pause ;keypress=true;}
+  if(map[90] && !keypress){switchShader = !switchShader;keypress=true;}
+  programInfo = (switchShader)?programInfoGrayscale:programInfoNormal;
 
   if(map[74]){camx-=0.1;}
   if(map[76]){camx+=0.1;}
@@ -190,49 +218,99 @@ function main() {
 
 //SHADERS
 function makeShader(gl){
-  // Vertex shader program
-
   const vsSource = `
-    attribute vec4 aVertexPosition;
-    attribute vec2 aTextureCoord;
-    uniform mat4 uModelViewMatrix;
-    uniform mat4 uProjectionMatrix;
-    varying highp vec2 vTextureCoord;
-    void main(void) {
-      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-      vTextureCoord = aTextureCoord;
-    }
+  attribute vec4 aVertexPosition;
+  attribute vec3 aVertexNormal;
+  attribute vec2 aTextureCoord;
+
+  uniform mat4 uNormalMatrix;
+  uniform mat4 uModelViewMatrix;
+  uniform mat4 uProjectionMatrix;
+
+  varying highp vec2 vTextureCoord;
+  varying highp vec3 vLighting;
+
+  void main(void) {
+    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    vTextureCoord = aTextureCoord;
+
+    // Apply lighting effect
+
+    highp vec3 ambientLight = vec3(0.9, 0.9, 0.9);
+    highp vec3 directionalLightColor = vec3(1, 1, 1);
+    highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
+
+    highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
+
+    highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
+    vLighting = ambientLight + (directionalLightColor * directional);
+  }
   `;
-
-  // Fragment shader program
-
   const fsSource = `
-    varying highp vec2 vTextureCoord;
-    uniform sampler2D uSampler;
-    void main(void) {
-      gl_FragColor = texture2D(uSampler, vTextureCoord);
-    }
-  `;
+  varying highp vec2 vTextureCoord;
+  varying highp vec3 vLighting;
 
-  // Initialize a shader program; this is where all the lighting
-  // for the vertices and so forth is established.
+  uniform sampler2D uSampler;
+
+  void main(void) {
+    highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
+
+    gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+    // precision highp float;
+    // vec4 color = texture2D(uSampler, vTextureCoord);
+    // float gray = dot(color.rgb,vec3(0.299,0.587,0.114));
+    // gl_FragColor = vec4(vec3(gray),1.0);
+  }
+  `;
+  const fsSourceGrayscale = `
+  varying highp vec2 vTextureCoord;
+  varying highp vec3 vLighting;
+
+  uniform sampler2D uSampler;
+
+  void main(void) {
+    highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
+
+    gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+    precision highp float;
+    vec4 color = texture2D(uSampler, vTextureCoord);
+    float gray = dot(color.rgb,vec3(0.299,0.587,0.114));
+    gl_FragColor = vec4(vec3(gray),1.0);
+  }
+  `;
   const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-  // Collect all the info needed to use the shader program.
-  // Look up which attributes our shader program is using
-  // for aVertexPosition, aVevrtexColor and also
-  // look up uniform locations.
-  programInfo = {
+  const shaderProgramGrayscale = initShaderProgram(gl, vsSource, fsSourceGrayscale);
+
+  programInfoNormal = {
     program: shaderProgram,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+      vertexNormal: gl.getAttribLocation(shaderProgram, 'aVertexNormal'),
       textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+      normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
       uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
     },
-};
+  };
+
+  programInfoGrayscale = {
+    program: shaderProgramGrayscale,
+    attribLocations: {
+      vertexPosition: gl.getAttribLocation(shaderProgramGrayscale, 'aVertexPosition'),
+      vertexNormal: gl.getAttribLocation(shaderProgramGrayscale, 'aVertexNormal'),
+      textureCoord: gl.getAttribLocation(shaderProgramGrayscale, 'aTextureCoord'),
+    },
+    uniformLocations: {
+      projectionMatrix: gl.getUniformLocation(shaderProgramGrayscale, 'uProjectionMatrix'),
+      modelViewMatrix: gl.getUniformLocation(shaderProgramGrayscale, 'uModelViewMatrix'),
+      normalMatrix: gl.getUniformLocation(shaderProgramGrayscale, 'uNormalMatrix'),
+      uSampler: gl.getUniformLocation(shaderProgramGrayscale, 'uSampler'),
+    },
+  };
+  programInfo = programInfoNormal;
 }
 function initShaderProgram(gl, vsSource, fsSource) {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);

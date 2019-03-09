@@ -11,7 +11,7 @@ let Wall = class {
         var length = 3.5;
         for(var i=-1;i<50;i++)
         {
-            let t = new Cube(gl, [xpos,i*length,height/2 - 1],this.dimension,this.picture);
+            let t = new Walltexture(gl, [xpos,i*length,height/2 - 1],this.dimension,this.picture);
             this.walls.push(t);
         }
     }

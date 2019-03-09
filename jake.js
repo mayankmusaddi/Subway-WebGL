@@ -4,8 +4,7 @@ var speed = 0.05;
 
 let Jake = class {
     constructor(gl, lane, dist) {
-        this.picture = 'sky.jpg';
-        this.dimension = [0.15,0.1,0.25];
+        this.dimension = [0.3,0.2,0.5];
         this.position = [lane,dist,this.dimension[2]/2];
         this.maxdist=0;
         this.gstate=false;
@@ -19,11 +18,42 @@ let Jake = class {
         this.lane = 0;
         this.dead = false;
         this.speed=[0,speed,0];
-        this.jake = new Cube(gl,this.position,this.dimension,this.picture);
+
+        this.headpic = 'head.jpg'; 
+        this.bodypic = 'shirt.jpg';
+        this.handpic = 'white.jpg';
+        this.legpic = 'jeans.jpeg';
+
+        this.body =  new Cube(gl,[this.position[0],this.position[1],this.position[2]+this.dimension[2]/7],                        [3*this.dimension[0]/5,this.dimension[1],3*this.dimension[2]/7],this.bodypic);
+        this.head =  new Cube(gl,[this.position[0],this.position[1],this.position[2]+(3*this.dimension[2])/7],                    [this.dimension[0]/5,this.dimension[1]/2,this.dimension[2]/7],this.headpic);
+        this.hand1 = new Cube(gl,[this.position[0]-(2*this.dimension[0])/5,this.position[1],this.position[2]+this.dimension[2]/7],[this.dimension[0]/10,this.dimension[1]/2,3*this.dimension[2]/7],this.handpic);
+        this.hand2 = new Cube(gl,[this.position[0]+(2*this.dimension[0])/5,this.position[1],this.position[2]+this.dimension[2]/7],[this.dimension[0]/10,this.dimension[1]/2,3*this.dimension[2]/7],this.handpic);
+        this.leg1 =  new Cube(gl,[this.position[0]-this.dimension[0]/5,this.position[1],this.position[2]-(2*this.dimension[2])/7],[this.dimension[0]/5,this.dimension[1]/2,3*this.dimension[2]/7],this.legpic);
+        this.leg2 =  new Cube(gl,[this.position[0]+this.dimension[0]/5,this.position[1],this.position[2]-(2*this.dimension[2])/7],[this.dimension[0]/5,this.dimension[1]/2,3*this.dimension[2]/7],this.legpic);
     }
 
     draw(gl, projectionMatrix, programInfo, deltaTime) {
-        this.jake.draw(gl,projectionMatrix,programInfo,deltaTime);
+        this.body.draw(gl,projectionMatrix,programInfo,deltaTime);
+        this.head.draw(gl,projectionMatrix,programInfo,deltaTime);
+        this.hand1.draw(gl,projectionMatrix,programInfo,deltaTime);
+        this.hand2.draw(gl,projectionMatrix,programInfo,deltaTime);
+        this.leg1.draw(gl,projectionMatrix,programInfo,deltaTime);
+        this.leg2.draw(gl,projectionMatrix,programInfo,deltaTime);
+    }
+
+    positionChange()
+    {
+        this.body.position=[this.position[0],this.position[1],this.position[2]+this.dimension[2]/7];
+        this.head.position=[this.position[0],this.position[1],this.position[2]+(3*this.dimension[2])/7];                    
+        this.hand1.position=[this.position[0]-(2*this.dimension[0])/5,this.position[1],this.position[2]+this.dimension[2]/7];
+        this.hand2.position=[this.position[0]+(2*this.dimension[0])/5,this.position[1],this.position[2]+this.dimension[2]/7];
+        this.leg1.position=[this.position[0]-this.dimension[0]/5,this.position[1],this.position[2]-(2*this.dimension[2])/7];
+        this.leg2.position=[this.position[0]+this.dimension[0]/5,this.position[1],this.position[2]-(2*this.dimension[2])/7];
+
+        this.hand1.rotationx+=0.1;
+        this.hand2.rotationx-=0.1;
+        this.leg1.rotationx+=0.1;
+        this.leg2.rotationx-=0.1;
     }
 
     tick(){
@@ -80,7 +110,7 @@ let Jake = class {
             {
                 this.distpo=0;
                 this.jumppo=false;
-                this.jumpvelocity=0.1;
+                this.jumpvelocity=0.12;
             }
         }
 
@@ -94,6 +124,8 @@ let Jake = class {
             this.position[2]=ground+this.dimension[2]/2;
             this.speed[2]=0;
         }
+
+        this.positionChange();
     }
     move_left(){
         if(!this.dead){

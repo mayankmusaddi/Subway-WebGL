@@ -6,8 +6,23 @@
     <link rel="stylesheet" href="../webgl.css" type="text/css">
   </head>
 
-  <body>
-    <canvas id="glcanvas" width="720" height="720" background-color="white"></canvas>
+  <body style="background-color:#B8CED9">
+  <div class="wrapper" style="margin: 0 auto; position: relative; width: 800px">
+    <canvas id="glcanvas" width="720" height="720" align="center"></canvas>
+  </div>
+  <div style="top:0; left:0;">
+    <h2 id ="status"></h2>
+    <h4 id="score">Score</h4>
+    <h4 id="progress">Progress</h4>
+    <h2>Controls</h2>
+    <ul>
+      <li>A,D - Left,Right</li>
+      <li>W,S - Jump,Duck</li>
+      <li>Z - Grayscale</li>
+      <li>Q - Pause</li>
+      <li>I,J,K,L,O,P - Camera Movement</li>
+    </ul>
+  </div>
   </body>
   <script src="./gl-matrix.js"></script>
 

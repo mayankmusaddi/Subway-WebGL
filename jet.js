@@ -1,17 +1,17 @@
 /// <reference path="webgl.d.ts" />
 
 let Jet = class {
-    constructor(gl, position) {
+    constructor(gl, lane,dist) {
 
         this.rotationx = 0;
         this.rotationy = 0;
         this.rotationz = 0;
-        this.position = position;
         this.picture = 'jet.jpg';
-
+        
         this.radius = 0.1;
         this.length = 0.3;
         this.dimension=[this.radius*2,this.length,this.radius*2];
+        this.position = [lane,dist,0.25];
         this.sides = 10;
         this.v = 12;
 

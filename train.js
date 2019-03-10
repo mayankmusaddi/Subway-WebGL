@@ -2,7 +2,7 @@
 
 let Train = class {
     constructor(gl, lane, dist) {
-        this.dimension = [0.8,10,1];
+        this.dimension = [0.8,7,1];
         this.position = [lane,dist,this.dimension[2]/2];
         this.backpic = 'front.jpg';
         this.sidepic = 'side.jpg';

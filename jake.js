@@ -14,6 +14,8 @@ let Jake = class {
         this.rise = false;
         this.distpo=0;
         this.jumppo=false;
+        this.magnetpo=false;
+        this.duckpo=false;
         this.jumpvelocity = 0.1;
         this.lane = 0;
         this.dead = false;
@@ -94,7 +96,7 @@ let Jake = class {
             this.gstate = false;
             this.position[2]+=0.1;
             this.distpo+=0.05;
-            if(this.distpo > 20)
+            if(this.distpo > 15)
             {
                 this.distpo=0;
                 this.rise = false;
@@ -107,7 +109,7 @@ let Jake = class {
         if(this.jumppo){
             this.jumpvelocity=0.15;
             this.distpo+=0.05;
-            if(this.distpo > 20)
+            if(this.distpo > 15)
             {
                 this.distpo=0;
                 this.jumppo=false;
@@ -121,6 +123,17 @@ let Jake = class {
             {
                 this.distpo=0;
                 this.magnetpo=false;
+            }
+        }
+        //duck effect
+        if(this.duckpo){
+            this.distpo+=0.05;
+            this.dimension = [0.3,0.2,0.25];
+            if(this.distpo > 2)
+            {
+                this.distpo=0;
+                this.duckpo=false;
+                this.dimension = [0.3,0.2,0.5];
             }
         }
 
@@ -170,6 +183,7 @@ let Jake = class {
         police.chase();
         this.dead= true;
         this.speed[1]=0;
+        document.getElementById('status').innerText = "Player Died! Game Over";
     }
     hasJump(){
         this.distpo=0;
@@ -184,5 +198,7 @@ let Jake = class {
         this.magnetpo = true;
     }
     duck(){
+        this.distpo=0;
+        this.duckpo=true;
     }
 };

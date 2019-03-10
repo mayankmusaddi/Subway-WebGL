@@ -4,7 +4,7 @@ var programInfoGrayscale;
 var map = {65 : false, 68 : false, 32 : false};
 var keypress = false;
 var switchShader = false;
-var len = 100;
+var len = 75;
 
 var progress = 0;
 var camx=0.0,camz=1.5;
@@ -13,7 +13,7 @@ var pause=false;
 var ground = 0;
 var gravity = -0.005;
 var coinsCollected = 0;
-var state;
+var state = [],collideTrain =[];
 
 var jake;
 var police;
@@ -22,6 +22,7 @@ var track2;
 var track3;
 var wall1;
 var wall2;
+var end;
 
 var trains=[];
 var roadblocks=[];
@@ -34,25 +35,43 @@ var obstacles=[];
 main();
 
 function initGL(gl){
+  document.getElementById('score').innerText = "Score : "+coinsCollected*100;
+  document.getElementById('progress').innerText = "Progress : "+progress/2.58;
+  
   track1 = new Track(gl,0, 1,len);
   track2 = new Track(gl,-1,1,len);
   track3 = new Track(gl,1, 1,len);
   wall1 = new Wall(gl,-2, 4, len);
   wall2 = new Wall(gl, 2, 4, len);
+  end = new Cube(gl,[0, (len-1)*3.5,1],[5,0,5],'endi.png');
 
-  trains.push(new Train(gl,-1,40));
-  roadblocks.push(new RoadBlock(gl,-1,40,2));
-  obstacles.push(new Obstacle(gl,1,35,2));
+  for(var i=1;i<10;i++)
+  {
+    trains.push(new Train(gl,(Math.floor(Math.random()*10)%3)-1,(len*3.5)/10*2*i));
+    state.push([false,false,false]);
+    collideTrain.push([false,false,false]);
+  }
+  for(i=1;i<15;i++)
+    roadblocks.push(new RoadBlock(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/15*i,(Math.floor(Math.random()*10)%2)+1));
+  for(i=1;i<10;i++)  
+    obstacles.push(new Obstacle(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/10*i,(Math.floor(Math.random()*10)%2)+1));
 
-  coins.push(new Coin(gl,[1,10,0.25]));
-  coins.push(new Coin(gl,[1,12,0.25]));
-  coins.push(new Coin(gl,[1,14,0.25]));
-  coins.push(new Coin(gl,[1,16,0.25]));
-  coins.push(new Coin(gl,[1,18,0.25]));
+  for(i=1;i<10;i++)
+  {
+    var lane = (Math.floor(Math.random()*10)%3)-1;
+    coins.push(new Coin(gl,lane,len*3.5/10*i+0));
+    coins.push(new Coin(gl,lane,len*3.5/10*i+2));
+    coins.push(new Coin(gl,lane,len*3.5/10*i+4));
+    coins.push(new Coin(gl,lane,len*3.5/10*i+6));
+    coins.push(new Coin(gl,lane,len*3.5/10*i+8));
+  }
 
-  jets.push(new Jet(gl,[1,20,0.25]));
-  jumps.push(new Jump(gl,-1,20));
-  magnets.push(new Magnet(gl,0,10));
+  for(i=1;i<5;i++)
+    jets.push(new Jet(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/6*i));
+  for(i=1;i<5;i++)
+    jumps.push(new Jump(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/6*i));
+  for(i=1;i<6;i++)
+    magnets.push(new Magnet(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/7*i));
 
   jake = new Jake(gl,0,1);
   police = new Police(gl,0,0);
@@ -96,6 +115,7 @@ function draw(gl, programInfo, deltaTime) {
   track1.draw(gl, VP, programInfo, deltaTime);
   track2.draw(gl, VP, programInfo, deltaTime);
   track3.draw(gl, VP, programInfo, deltaTime);
+  end.draw(gl, VP, programInfo, deltaTime);
   
   for(i=0;i<trains.length;i++)
     trains[i].draw(gl, VP, programInfo, deltaTime);
@@ -115,7 +135,7 @@ function tick_elements(){
     ground = 0;
 
     //COLLISION DETECTION
-  
+    
     //WALL
     var collide = detect_collision(jake,wall1);
     if(collide[0])
@@ -123,6 +143,13 @@ function tick_elements(){
     collide = detect_collision(jake,wall2);
     if(collide[0])
     jake.slowdown();
+    
+    //END
+    if(jake.position[1]>=(len-1)*3.5)
+    {
+      document.getElementById('status').innerText = "You Won!";
+      pause = true;
+    }
 
     //COINS
     for(i=0;i<coins.length;i++)
@@ -139,6 +166,7 @@ function tick_elements(){
       {
         coins.splice(i,1);
         coinsCollected++;
+        document.getElementById('score').innerText ="Score : "+coinsCollected*100;
       }
     }
 
@@ -196,33 +224,35 @@ function tick_elements(){
     for(i=0;i<trains.length;i++)
     {
       trains[i].tick();
-      collide = detect_collision(jake,trains[i]);
-      if(collide[0] && collide[1] && collide[2])
+      collideTrain[i] = detect_collision(jake,trains[i]);
+      if(collideTrain[i][0] && collideTrain[i][1] && collideTrain[i][2])
       {
-        if(state[0] && state[1])
+        if(state[i][0] && state[i][1])
         {
           //ON TOP
           jake.speed[2]=0;
           ground = trains[i].position[2]+trains[i].dimension[2]/2;
         }
-        if(state[1] && state[2])
+        if(state[i][1] && state[i][2])
         {
           //FROM SIDE
           jake.slowdown();
         }
-        if(state[0] && state[2])
+        if(state[i][0] && state[i][2])
         {
           //FROM FRONT
           jake.hasDied();
         }
       }
-      state = collide;
+      state[i] = collideTrain[i];
     }
 
     //PLAYER MOVEMENT
     jake.tick(); //always keep it below collision of train
     camx = jake.position[0]*0.6;
+    camz = jake.position[2]+1.25;
     progress+=jake.speed[1];
+    document.getElementById('progress').innerText = "Progress : "+Math.floor(progress/2.58);
 
     police.tick();
   }
@@ -242,6 +272,8 @@ function tick_input(){
   if(map[65] && !keypress){jake.move_left();keypress=true;}
   if(map[68] && !keypress){jake.move_right();keypress=true;}
   if(map[87] && !keypress){jake.jump();keypress=true;}
+  if(map[83] && !keypress){jake.duck();keypress=true;}
+
   if(map[81] && !keypress){ pause = !pause ;keypress=true;}
   if(map[90] && !keypress){switchShader = !switchShader;keypress=true;}
   programInfo = (switchShader)?programInfoGrayscale:programInfoNormal;

@@ -15,10 +15,10 @@ let Police = class {
         this.position =[lane,dist,this.dimension[2]/2];
         // this.police = new Cube(gl,this.position,this.dimension,this.picture);
 
-        this.headpic = 'head.jpg'; 
-        this.bodypic = 'police.jpg';
-        this.handpic = 'pant.jpg';
-        this.legpic = 'pant.jpg';
+        this.headpic = './textures/head.jpg'; 
+        this.bodypic = './textures/police.jpg';
+        this.handpic = './textures/pant.jpg';
+        this.legpic =  './textures/pant.jpg';
 
         this.body =  new Cube(gl,[this.position[0],this.position[1],this.position[2]+this.dimension[2]/7],                        [3*this.dimension[0]/5,this.dimension[1],3*this.dimension[2]/7],this.bodypic);
         this.head =  new Cube(gl,[this.position[0],this.position[1],this.position[2]+(3*this.dimension[2])/7],                    [this.dimension[0]/5,this.dimension[1]/2,this.dimension[2]/7],this.headpic);

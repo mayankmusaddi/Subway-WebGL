@@ -1,6 +1,7 @@
 /// <reference path="webgl.d.ts" />
 
 var speed = 0.05;
+var audio;
 
 let Jake = class {
     constructor(gl, lane, dist) {
@@ -15,16 +16,17 @@ let Jake = class {
         this.distpo=0;
         this.jumppo=false;
         this.magnetpo=false;
+        this.duckdist=0;
         this.duckpo=false;
         this.jumpvelocity = 0.1;
         this.lane = 0;
         this.dead = false;
         this.speed=[0,speed,0];
 
-        this.headpic = 'head.jpg'; 
-        this.bodypic = 'shirt.jpg';
-        this.handpic = 'white.jpg';
-        this.legpic = 'jeans.jpeg';
+        this.headpic = './textures/head.jpg'; 
+        this.bodypic = './textures/shirt.jpg';
+        this.handpic = './textures/white.jpg';
+        this.legpic = './textures/jeans.jpeg';
 
         this.body =  new Cube(gl,[this.position[0],this.position[1],this.position[2]+this.dimension[2]/7],                        [3*this.dimension[0]/5,this.dimension[1],3*this.dimension[2]/7],this.bodypic);
         this.head =  new Cube(gl,[this.position[0],this.position[1],this.position[2]+(3*this.dimension[2])/7],                    [this.dimension[0]/5,this.dimension[1]/2,this.dimension[2]/7],this.headpic);
@@ -98,6 +100,8 @@ let Jake = class {
             this.distpo+=0.05;
             if(this.distpo > 15)
             {
+                audio = new Audio('./sound/hurrah_fall.wav');
+                audio.play();
                 this.distpo=0;
                 this.rise = false;
                 this.gstate = true;
@@ -127,11 +131,11 @@ let Jake = class {
         }
         //duck effect
         if(this.duckpo){
-            this.distpo+=0.05;
+            this.duckdist+=0.05;
             this.dimension = [0.3,0.2,0.25];
-            if(this.distpo > 2)
+            if(this.duckdist > 2)
             {
-                this.distpo=0;
+                this.duckdist=0;
                 this.duckpo=false;
                 this.dimension = [0.3,0.2,0.5];
             }
@@ -170,6 +174,8 @@ let Jake = class {
     }
     slowdown(){
         police.chase();
+        audio = new Audio('./sound/player_hurt_2.wav');
+        audio.play();
         this.speed[1]-=speed/2;
         if(this.speed[1]==0)
             this.dead = true;
@@ -184,12 +190,16 @@ let Jake = class {
         this.dead= true;
         this.speed[1]=0;
         document.getElementById('status').innerText = "Player Died! Game Over";
+        audio = new Audio('./sound/resurrect.wav');
+        audio.play();
     }
     hasJump(){
         this.distpo=0;
         this.jumppo=true;
     }
     hasJet(){
+        audio = new Audio('./sound/hurrah_fall.wav');
+        audio.play();
         this.distpo=0;
         this.rise = true;
     }

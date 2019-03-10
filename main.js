@@ -5,6 +5,7 @@ var map = {65 : false, 68 : false, 32 : false};
 var keypress = false;
 var switchShader = false;
 var len = 75;
+var audio;
 
 var progress = 0;
 var camx=0.0,camz=1.5;
@@ -43,7 +44,7 @@ function initGL(gl){
   track3 = new Track(gl,1, 1,len);
   wall1 = new Wall(gl,-2, 4, len);
   wall2 = new Wall(gl, 2, 4, len);
-  end = new Cube(gl,[0, (len-1)*3.5,1],[5,0,5],'endi.png');
+  end = new Cube(gl,[0, (len-1)*3.5,1],[5,0,5],'./textures/end.png');
 
   for(var i=1;i<10;i++)
   {
@@ -68,8 +69,8 @@ function initGL(gl){
 
   for(i=1;i<5;i++)
     jets.push(new Jet(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/6*i));
-  for(i=1;i<5;i++)
-    jumps.push(new Jump(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/6*i));
+  for(i=1;i<4;i++)
+    jumps.push(new Jump(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/4*i));
   for(i=1;i<6;i++)
     magnets.push(new Magnet(gl,(Math.floor(Math.random()*10)%3)-1,len*3.5/7*i));
 
@@ -149,6 +150,8 @@ function tick_elements(){
     {
       document.getElementById('status').innerText = "You Won!";
       pause = true;
+      audio = new Audio('./sound/medal_receive.wav');
+      audio.play();
     }
 
     //COINS
@@ -164,6 +167,8 @@ function tick_elements(){
       collide = detect_collision(jake,coins[i]);
       if(collide[0] && collide[1] && collide[2])
       {
+        audio = new Audio('./sound/coin_pickup_1.wav');
+        audio.play();
         coins.splice(i,1);
         coinsCollected++;
         document.getElementById('score').innerText ="Score : "+coinsCollected*100;
@@ -177,6 +182,8 @@ function tick_elements(){
       collide = detect_collision(jake,jets[i]);
       if(collide[0] && collide[1] && collide[2])
       {
+        audio = new Audio('./sound/achievement_complete.wav');
+        audio.play();
         jets.splice(i,1);
         jake.hasJet();
       }
@@ -186,6 +193,8 @@ function tick_elements(){
       collide = detect_collision(jake,magnets[i]);
       if(collide[0] && collide[1] && collide[2])
       {
+        audio = new Audio('./sound/achievement_complete.wav');
+        audio.play();
         magnets.splice(i,1);
         jake.hasMagnet();
       }
@@ -195,6 +204,8 @@ function tick_elements(){
       collide = detect_collision(jake,jumps[i]);
       if(collide[0] && collide[1] && collide[2])
       {
+        audio = new Audio('./sound/achievement_complete.wav');
+        audio.play();
         jumps.splice(i,1);
         jake.hasJump();
       }
@@ -257,6 +268,7 @@ function tick_elements(){
     police.tick();
   }
 }
+
 function detect_collision(a,b){
   var colx = (Math.abs(a.position[0] - b.position[0]) *2 < a.dimension[0]+b.dimension[0]);
   var coly = (Math.abs(a.position[1] - b.position[1]) *2 < a.dimension[1]+b.dimension[1]);
@@ -285,7 +297,6 @@ function tick_input(){
   if(map[79]){progress+=0.1;}
   if(map[80]){progress-=0.1;}
 }
-
 function main() {
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -311,7 +322,6 @@ function main() {
   }
   requestAnimationFrame(render);
 }
-
 //SHADERS
 function makeShader(gl){
   const vsSource = `

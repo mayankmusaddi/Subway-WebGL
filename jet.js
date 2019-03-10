@@ -6,7 +6,7 @@ let Jet = class {
         this.rotationx = 0;
         this.rotationy = 0;
         this.rotationz = 0;
-        this.picture = 'jet.jpg';
+        this.picture = './textures/jet.jpg';
         
         this.radius = 0.1;
         this.length = 0.3;

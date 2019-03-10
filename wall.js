@@ -4,7 +4,7 @@ var texture;
 
 let Wall = class {
     constructor(gl, xpos,height, len) {
-        this.picture = 'wall.png';
+        this.picture = './textures/wall.png';
         this.position = [xpos,0,height/2];
         this.dimension = [0,3.5,height];
         this.walls=[];

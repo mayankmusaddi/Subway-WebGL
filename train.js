@@ -4,9 +4,9 @@ let Train = class {
     constructor(gl, lane, dist) {
         this.dimension = [0.8,7,1];
         this.position = [lane,dist,this.dimension[2]/2];
-        this.backpic = 'front.jpg';
-        this.sidepic = 'side.jpg';
-        this.toppic = 'top.jpg';
+        this.backpic = './textures/front.jpg';
+        this.sidepic = './textures/side.jpg';
+        this.toppic =  './textures/top.jpg';
         var width = this.dimension[0];
         var breadth = this.dimension[1];
         var height = this.dimension[2];

@@ -4,7 +4,7 @@ var texture;
 
 let Track = class {
     constructor(gl, xpos,width,len) {
-        this.picture = 'track.jpg';
+        this.picture = './textures/track.jpg';
         this.tracks=[];
         var length = 3.5;
         this.len = len;
